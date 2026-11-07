@@ -10,6 +10,30 @@ pinned: false
 license: mit
 ---
 
+# 🧬 LitAgent: Evidence-Grounded Biomedical Literature Agent
+
+[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Live%20Demo-blue)](https://huggingface.co/spaces/y1027940727/litagent)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+> **Live Web App:** [https://huggingface.co/spaces/y1027940727/litagent](https://huggingface.co/spaces/y1027940727/litagent)
+
+LitAgent 是一個專為臨床生醫研究打造的文獻檢索與反幻覺驗證 Agent，整合 **PubMed Entrez API** 與 **Gemini LLM**，在端到端查詢中達成 **0% 偽造引用（Zero Fabricated Citations）**。
+
+## 系統架構流程 (Architecture)
+
+```mermaid
+flowchart LR
+    A[臨床/生醫 Query] --> B[LitAgent Core]
+    B --> C[PubMed API 檢索]
+    C --> D[摘要與證據提取]
+    D --> E[Gemini LLM 綜合生成]
+    E --> F[Citation Grounding Verifier]
+    F --> G[輸出真實文獻解答 + PMID 超連結]
+```
+
+---
+
 # LitAgent: Evidence-Grounded Biomedical Literature Agent
 
 LitAgent 是專為生物醫學與臨床研究領域設計的文獻檢索與問答驗證 Agent。結合 PubMed 即時檢索、LLM 證據萃取與端到端 PMID 引用真確性自動校驗機制。
