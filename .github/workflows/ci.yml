@@ -18,15 +18,14 @@ jobs:
       with:
         python-version: "3.10"
 
-    - name: Install dependencies
+    - name: Install test dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pytest requests scikit-learn gradio
-        pip install -e .
+        pip install pytest requests scikit-learn
 
     - name: Run Unit Tests
       env:
-        PYTHONPATH: ${{ github.workspace }}
+        PYTHONPATH: .
         GEMINI_API_KEY: mock_ci_test_key
       run: |
         pytest tests/ -v
