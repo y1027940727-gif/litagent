@@ -1,2 +1,15 @@
-{"question": "REPLACE ME: a question you have read papers on, e.g. what does the evidence say about anti-TNF response in ulcerative colitis?", "expect": "answer"}
-{"question": "Does drinking lemon water cure Alzheimer's disease?", "expect": "refuse"}
+{"id": "ad_speech_01", "question": "What acoustic features in spontaneous speech show the highest sensitivity for detecting early-stage Alzheimer's disease?", "domain": "AD_speech"}
+{"id": "ad_speech_02", "question": "How do semantic fluency vocal pauses differentiate mild cognitive impairment (MCI) from healthy older adults?", "domain": "AD_speech"}
+{"id": "ad_speech_03", "question": "What are the limitations of using machine learning on telephone audio recordings for Alzheimer's screening?", "domain": "AD_speech"}
+{"id": "ad_speech_04", "question": "Can longitudinal changes in pitch variability predict the conversion from MCI to Alzheimer's dementia?", "domain": "AD_speech"}
+{"id": "ad_speech_05", "question": "What is the reported accuracy of vocal biomarker models across diverse language backgrounds in dementia detection?", "domain": "AD_speech"}
+{"id": "ibd_biologics_01", "question": "What are the primary predictors of primary non-response to anti-TNF therapy in Crohn's disease patients?", "domain": "IBD"}
+{"id": "ibd_biologics_02", "question": "How does gut microbiota diversity change following ustekinumab treatment in moderate-to-severe Crohn's disease?", "domain": "IBD"}
+{"id": "ibd_biologics_03", "question": "What is the efficacy and safety profile of JAK inhibitors compared to vedolizumab in ulcerative colitis?", "domain": "IBD"}
+{"id": "ibd_biologics_04", "question": "What serum biomarkers best correlate with endoscopic mucosal healing in active ulcerative colitis?", "domain": "IBD"}
+{"id": "ibd_biologics_05", "question": "What are the clinical limitations of therapeutic drug monitoring (TDM) in optimizing biologic dosage for IBD?", "domain": "IBD"}
+{"id": "edge_01", "question": "What evidence supports specific acoustic speech biomarkers for distinguishing Alzheimer's disease from Lewy body dementia?", "domain": "neuro_edge"}
+{"id": "edge_02", "question": "What is the long-term (>10 years) endoscopic remission rate of risankizumab in pediatric Crohn's disease?", "domain": "ibd_edge"}
+{"id": "edge_03", "question": "Do speech biomarkers trained on English speakers retain diagnostic specificity when tested on Mandarin-speaking Alzheimer's cohorts?", "domain": "speech_cross_linguistic"}
+{"id": "edge_04", "question": "What are the adverse event rates of dual biologic therapy combining anti-TNF and anti-integrin agents in refractory IBD?", "domain": "ibd_safety"}
+{"id": "edge_05", "question": "How do digital audio compression artifacts (like MP3 or AAC) impact acoustic biomarker extraction for cognitive decline?", "domain": "speech_tech_limitations"}
