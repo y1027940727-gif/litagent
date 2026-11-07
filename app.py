@@ -1,4 +1,24 @@
+import sys
 import os
+
+# Hot-patch: 解決 huggingface_hub 新版移除 HfFolder 導致 gradio[oauth] 崩潰的問題
+try:
+    import huggingface_hub
+    if not hasattr(huggingface_hub, "HfFolder"):
+        class MockHfFolder:
+            @staticmethod
+            def get_token():
+                return os.getenv("HF_TOKEN") or None
+            @staticmethod
+            def save_token(token):
+                pass
+            @staticmethod
+            def delete_token():
+                pass
+        huggingface_hub.HfFolder = MockHfFolder
+except Exception:
+    pass
+
 import gradio as gr
 from litagent.agent import Agent
 from litagent.llm import Gemini
@@ -49,4 +69,4 @@ demo = gr.Interface(
 )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(server_name="0.0.0.0", server_port=7860)
