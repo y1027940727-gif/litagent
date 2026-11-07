@@ -1,7 +1,7 @@
 import sys
 import os
 
-# Hot-patch: 解決 huggingface_hub 新版移除 HfFolder 導致 gradio[oauth] 崩潰的問題
+# 1. Hot-patch: 解決 huggingface_hub 新版移除 HfFolder 問題
 try:
     import huggingface_hub
     if not hasattr(huggingface_hub, "HfFolder"):
@@ -19,10 +19,19 @@ try:
 except Exception:
     pass
 
+# 2. 相容 ZeroGPU 檢查：提供 @spaces.GPU 裝飾器避免啟動中斷
+try:
+    import spaces
+    gpu_decorator = spaces.GPU
+except ImportError:
+    def gpu_decorator(fn):
+        return fn
+
 import gradio as gr
 from litagent.agent import Agent
 from litagent.llm import Gemini
 
+@gpu_decorator
 def answer_query(question):
     if not question or not question.strip():
         return "請輸入醫學相關問題。", ""
