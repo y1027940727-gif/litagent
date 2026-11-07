@@ -3,18 +3,17 @@ import gradio as gr
 from litagent.agent import Agent
 from litagent.llm import Gemini
 
-# 讀取 Secret 中的金鑰
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise RuntimeError("請在 Space Settings -> Variables and secrets 中設定 GEMINI_API_KEY")
-
-agent = Agent(Gemini(model="gemini-flash-lite-latest", api_key=api_key))
-
 def answer_query(question):
-    if not question.strip():
+    if not question or not question.strip():
         return "請輸入醫學相關問題。", ""
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return "系統未設定 GEMINI_API_KEY，請在 Space Settings -> Secrets 中確認配置。", ""
+    
     try:
-        res = agent.run(question)
+        agent = Agent(Gemini(model="gemini-flash-lite-latest", api_key=api_key))
+        res = agent.run(question.strip())
         citations = res.check.get("cited", [])
         
         cite_text = "### 引用真實文獻檢驗\n"
@@ -23,7 +22,7 @@ def answer_query(question):
                 raw_id = pmid.replace("PMID:", "").strip()
                 cite_text += f"- [{pmid}](https://pubmed.ncbi.nlm.nih.gov/{raw_id})\n"
         else:
-            cite_text += "無特定單篇引用（或資料不足保留回答）"
+            cite_text += "無特定單篇引用（或檢索證據不足保留回答）"
             
         return res.answer, cite_text
     except Exception as e:
