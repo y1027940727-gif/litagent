@@ -1,3 +1,15 @@
+---
+title: LitAgent
+emoji: 🧬
+colorFrom: blue
+colorTo: green
+sdk: gradio
+sdk_version: 4.29.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
 # LitAgent: Evidence-Grounded Biomedical Literature Agent
 
 LitAgent 是專為生物醫學與臨床研究領域設計的文獻檢索與問答驗證 Agent。結合 PubMed 即時檢索、LLM 證據萃取與端到端 PMID 引用真確性自動校驗機制。
