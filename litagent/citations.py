@@ -1,7 +1,7 @@
 """Deterministic citation checks. No LLM is involved, so these are testable."""
 import re
 
-CITE = re.compile(r"\[[^\[\]]*?(?:PMID|NCT):[^\[\]]*\]")
+CITE = re.compile(r"\[[^\[\]]*?(?:PMID|NCT):[^\[\]]*\]")  # a bracket group holding one or more IDs
 ID = re.compile(r"((?:PMID|NCT):[A-Za-z0-9]+)")
 # Sentences that are refusals / statements of missing evidence don't need a citation.
 REFUSAL = re.compile(r"(insufficient evidence|not enough evidence|could not find|no (relevant )?(studies|evidence))", re.I)

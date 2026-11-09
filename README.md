@@ -10,55 +10,45 @@ pinned: false
 license: mit
 ---
 
-# 🧬 LitAgent: Evidence-Grounded Biomedical Literature Agent
+# LitAgent: citation-checked biomedical literature agent
 
-[![Hugging Face Spaces](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Live%20Demo-blue)](https://huggingface.co/spaces/y1027940727/litagent)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+A small tool-calling agent that searches PubMed and ClinicalTrials.gov, ranks the records with TF-IDF (scikit-learn),
+asks Gemini to answer from those records only, and then checks the answer's citations in plain code.
+It is a personal learning project, not a clinical tool, and gives no medical advice.
 
-> **Live Web App:** [https://huggingface.co/spaces/y1027940727/litagent](https://huggingface.co/spaces/y1027940727/litagent)
+一個小型文獻檢索 Agent：搜尋 PubMed 與 ClinicalTrials.gov，用 TF-IDF 排序，讓 Gemini 只根據檢索到的紀錄作答，再用程式檢查引用。這是個人學習專案，不是臨床工具。
 
-LitAgent 是一個專為臨床生醫研究打造的文獻檢索與反幻覺驗證 Agent，整合 **PubMed Entrez API** 與 **Gemini LLM**，在端到端查詢中達成 **0% 偽造引用（Zero Fabricated Citations）**。
+## What the checker does (and does not)
 
-## 系統架構流程 (Architecture)
+- Checks that every `[PMID:…]` / `[NCT:…]` in the answer was actually returned by a search in that run (cited but not retrieved = "invalid").
+- Flags factual-looking sentences with no citation. Recognises "insufficient evidence" refusals.
+- It does **not** check that a cited paper really supports the sentence. That needs human review (blank `human_*` columns in `eval/results.csv`).
 
-```mermaid
-flowchart LR
-    A[臨床/生醫 Query] --> B[LitAgent Core]
-    B --> C[PubMed API 檢索]
-    C --> D[摘要與證據提取]
-    D --> E[Gemini LLM 綜合生成]
-    E --> F[Citation Grounding Verifier]
-    F --> G[輸出真實文獻解答 + PMID 超連結]
-```
+## First evaluation (15 questions, Gemini `gemini-flash-lite-latest`)
 
----
+| Metric | Result |
+| :--- | :---: |
+| Questions | 15 (IBD biologics, speech biomarkers in Alzheimer's, edge cases) |
+| Invalid citations (cited but not retrieved) | 0 |
+| Passed automated checks | 11 / 15 |
+| Needs a full answer (10 questions) | 6 passed |
+| Edge questions (answer or honest refusal, 5) | 5 passed |
+| Human check of claim support | not done yet |
 
-# LitAgent: Evidence-Grounded Biomedical Literature Agent
+Caveats: small sample; the same 15 questions were used while debugging, so this is a development score, not a held-out one;
+results vary between runs because the model is not deterministic. Raw output is in `eval/results.json` and `eval/results.csv`.
 
-LitAgent 是專為生物醫學與臨床研究領域設計的文獻檢索與問答驗證 Agent。結合 PubMed 即時檢索、LLM 證據萃取與端到端 PMID 引用真確性自動校驗機制。
-
-## 評估成果 (Benchmark Evaluation)
-
-針對臨床與生物醫學領域（發炎性腸道疾病 IBD 治療預後、阿茲海默症語音聲學生物標記、跨語言與模型泛化邊界）設計 15 道專業評估題目，執行端到端管線驗證：
-
-| 評估維度 | 指標數據 | 臨床意義與說明 |
-| :--- | :---: | :--- |
-| **總測試題數 (Sample Size)** | 15 題 | 涵蓋 IBD 治療響應、阿茲海默聲學生標、跨語言泛化與研究邊界檢驗 |
-| **虛構引用數 (Fabricated Citations)** | **0 篇** | 引用的文獻經 PubMed 全數查核，**無任何編造之偽造文獻（0% 幻覺）** |
-| **嚴格引證合規率 (Strict Pass Rate)** | **26.7%** | 嚴格要求逐句附帶真實文獻證據，保留對資料不足時的臨床安全拒答機制 |
-| **無效引用率 (Invalid Citation Rate)** | **0.0%** | 所有由 Agent 生成的 PMID 標記皆為 PubMed 現存之有效學術文獻 |
-
-### 核心能力與安全設計 (Core Capabilities)
-- **嚴格對齊原著證據**：檢索 PubMed 摘要後逐句校驗，杜絕 LLM 常見的學術文獻捏造問題。
-- **邊界條件安全拒答**：當檢索證據不足以支持強烈臨床因果結論時，系統採取保守策略避免誤導。
-
-## 快速開始 (Quick Start)
+## Run it
 
 ```bash
-# 1. 安裝相依套件
 pip install -r requirements.txt
-
-# 2. 執行評估管線
+export GEMINI_API_KEY=...        # never commit a key
+python -m unittest discover -s tests   # offline tests, no network
 python -m litagent.evaluate eval/questions.jsonl
 ```
+
+`app.py` is a small Gradio interface. Hosting status of any public demo is not guaranteed.
+
+## Layout
+
+`litagent/` agent loop, PubMed/ClinicalTrials.gov parsers, TF-IDF retrieval, citation checker, Gemini client, evaluation harness · `tests/` offline unit tests with a scripted mock model · `eval/` questions and results.

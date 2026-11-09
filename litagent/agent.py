@@ -21,7 +21,10 @@ Rules for the answer:
 - Every factual sentence must end with a citation like [PMID:12345678] or [NCT:NCT01234567].
 - Cite ONLY records returned by your tool calls. Never invent identifiers.
 - Report what the records say, including limits (small samples, abstracts only). Do not extrapolate.
-- If the evidence retrieved does not answer the question, say "Insufficient evidence retrieved" and explain what is missing."""
+- Every sentence, including sentences about limitations, must end with a citation of the record(s) it refers to.
+- If a search returns "No records found.", search again with fewer and simpler keywords before giving up.
+- If the evidence retrieved does not answer the question, say "Insufficient evidence retrieved" and explain what is missing.
+- The "text" field of an answer must never be empty."""
 
 
 @dataclass
@@ -30,6 +33,18 @@ class Result:
     check: dict
     steps: list = field(default_factory=list)
     retrieved_ids: list = field(default_factory=list)
+
+
+ANSWER_KEYS = ("text", "answer", "content", "response", "final_answer")
+
+
+def _answer_text(act: dict) -> str:
+    """Models sometimes put the answer under another key; an empty answer is never accepted."""
+    for k in ANSWER_KEYS:
+        v = act.get(k)
+        if isinstance(v, str) and v.strip():
+            return v.strip()
+    return ""
 
 
 def _parse_action(text: str) -> dict:
@@ -67,7 +82,12 @@ class Agent:
             kind = act.get("action")
             steps.append({k: v for k, v in act.items() if k != "text"})
             if kind == "answer":
-                return self._finish(act.get("text", ""), index, steps)
+                text = _answer_text(act)
+                if text:
+                    return self._finish(text, index, steps)
+                steps.append({"error": "empty answer"})
+                messages.append({"role": "user", "text": 'Your answer text was empty. Reply with {"action":"answer","text":"..."} containing the full answer.'})
+                continue
             q = act.get("query", "")
             try:
                 if kind == "search_pubmed":
@@ -83,8 +103,10 @@ class Agent:
         messages.append({"role": "user", "text": 'Step limit reached. Reply now with {"action":"answer",...}.'})
         raw = self.llm.complete(SYSTEM, messages)
         try:
-            text = _parse_action(raw).get("text", "")
+            text = _answer_text(_parse_action(raw))
         except (ValueError, json.JSONDecodeError):
+            text = ""
+        if not text:
             text = "Insufficient evidence retrieved: the agent did not produce a valid answer."
         return self._finish(text, index, steps)
 

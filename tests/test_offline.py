@@ -54,6 +54,15 @@ class TestCitations(unittest.TestCase):
         self.assertTrue(c["citation_valid"])
         self.assertEqual(c["uncited_sentences"], [])
 
+    def test_grouped_citation(self):
+        a = "Many patients lose response over time in practice [PMID:111, PMID:222]."
+        c = citations.check(a, {"PMID:111", "PMID:222"})
+        self.assertEqual(c["cited"], ["PMID:111", "PMID:222"])
+        self.assertTrue(c["citation_valid"])
+        self.assertEqual(c["uncited_sentences"], [])
+        c2 = citations.check(a, {"PMID:111"})
+        self.assertEqual(c2["invalid"], ["PMID:222"])
+
     def test_fabricated_id_flagged(self):
         c = citations.check("Response was 40% at week eight in this cohort [PMID:999].", {"PMID:111"})
         self.assertFalse(c["citation_valid"])
@@ -114,6 +123,23 @@ class TestAgent(unittest.TestCase):
         r = Agent(llm).run("q")
         self.assertTrue(r.check["is_refusal"])
 
+    def test_empty_answer_is_retried(self):
+        llm = Scripted([
+            json.dumps({"action": "answer", "text": ""}),
+            json.dumps({"action": "answer", "text": "Insufficient evidence retrieved."}),
+        ])
+        r = Agent(llm).run("q")
+        self.assertTrue(r.answer)
+        self.assertTrue(r.check["is_refusal"])
+
+    def test_answer_under_other_key_is_accepted(self):
+        llm = Scripted([
+            json.dumps({"action": "search_pubmed", "query": "x"}),
+            json.dumps({"action": "answer", "answer": "Response was 40% at week eight in this cohort [PMID:111]."}),
+        ])
+        r = Agent(llm, pubmed_search=lambda q: docs("PMID:111")).run("q")
+        self.assertTrue(r.check["citation_valid"])
+
     def test_step_limit_forces_answer(self):
         s = json.dumps({"action": "search_pubmed", "query": "x"})
         llm = Scripted([s, s, json.dumps({"action": "answer", "text": "Insufficient evidence retrieved."})])
@@ -134,6 +160,31 @@ class TestEval(unittest.TestCase):
         self.assertTrue(r1["pass"] and r2["pass"])
         s = evaluate.summarize([r1, r2])
         self.assertEqual((s["pass_rate"], s["fabricated_citation_count"]), (1.0, 0))
+
+
+class TestEvalRun(unittest.TestCase):
+    def test_run_survives_errors_and_saves(self):
+        import tempfile
+        d = tempfile.mkdtemp()
+        q = os.path.join(d, "q.jsonl")
+        with open(q, "w") as f:
+            f.write(json.dumps({"id": "a1", "query": "x"}) + "\n")
+            f.write(json.dumps({"id": "edge_1", "question": "y"}) + "\n")
+
+        class Boom(LLM):
+            n = 0
+
+            def complete(self, system, messages):
+                Boom.n += 1
+                if Boom.n == 1:
+                    raise RuntimeError("api down")
+                return json.dumps({"action": "answer", "text": "Insufficient evidence retrieved."})
+
+        out = evaluate.run(q, Agent(Boom()), pause=0)
+        self.assertEqual(out["summary"]["n_errors"], 1)
+        self.assertTrue(out["rows"][1]["pass"])  # edge_ -> "either" -> honest refusal passes
+        evaluate.save(out, os.path.join(d, "r.json"), os.path.join(d, "r.csv"))
+        self.assertTrue(os.path.exists(os.path.join(d, "r.csv")))
 
 
 if __name__ == "__main__":
